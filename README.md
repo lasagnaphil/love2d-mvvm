@@ -13,6 +13,7 @@ Todo:
 - Computed properties (getters/setters)
 
 Example:
+
 ```lua
 require "plugins.gooi.gooi"
 local ui = require "mvvm"
@@ -23,8 +24,13 @@ ui.ViewModel {
         text = "Exit",
         x = 300,
         y = 300,
-        w = 150,
-        h = 35,
+        width = 150,
+        height = 35,
+    },
+    methods = {
+        onRelease = function()
+            gooi.confirm("Are you sure?", function() love.event.quit() end)
+        end
     }
 }
 
@@ -39,21 +45,17 @@ ui.ViewModel {
 function love.load()
     local button = ui.Button {
         name = "button",
-        text = ui.bind "text",
-        x = ui.bind "x",
-        y = ui.bind "y",
-        w = ui.bind "w",
-        h = ui.bind "h",
+        text = ui.bindVar "text",
+        x = ui.bindVar "x",
+        y = ui.bindVar "y",
+        w = ui.bindVar "width",
+        h = ui.bindVar "height",
         align = "left", icon = "imgs/exit.png",
-        onRelease = function()
-            gooi.confirm("Are you sure?", function()
-                love.event.quit()
-            end)
-        end
+        onRelease = ui.bindMethod "onRelease"
     }
     local panel = ui.Panel {
         name = "panel",
-        x = 0, y = 0, w = ui.bind "w", h = ui.bind "h",
+        x = 0, y = 0, w = ui.bindVar "w", h = ui.bindVar "h",
         layout = "grid 4x4",
         rowspan = {1, 1, 2},
         colspan = {4, 3, 2},
@@ -82,4 +84,3 @@ end
 function love.mousepressed(x, y, button)  gooi.pressed() end
 function love.mousereleased(x, y, button) gooi.released() end
 ```
-
