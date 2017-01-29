@@ -5,6 +5,9 @@ ui.vues = {
     <comp id>: {
         data: {
             <varName>: <value>
+        },
+        methods: {
+            <methodName>: <function>
         }
     }
 }
@@ -13,6 +16,10 @@ ui.dataBinding = {
     <comp id>: {
         ref: <reference to comp>,
         vars: {
+            <bindingName>: <varName>
+        },
+        methods: {
+            <bindingName>: <varName>
         }
     }
 }
@@ -28,10 +35,21 @@ ui.vues = {}
 ui.dataBinding = {}
 ui.components = {}
 
-function ui.bind(args)
-    local bindData = { binding = true }
+function ui.bindVar(args)
+    local bindData = { binding = true, type = "var" }
     if type(args) == "string" then
-        bindData.varName = args
+        bindData.name = args
+    else
+        error("Wrong argument type in bind() function")
+        return nil
+    end
+    return bindData
+end
+
+function ui.bindMethod(args)
+    local bindData = { binding = true, type = "method" }
+    if type(args) == "string" then
+        bindData.name = args
     else
         error("Wrong argument type in bind() function")
         return nil
@@ -46,31 +64,45 @@ function ui.createComponent(compCreateFunc, t)
         return nil
     end
     local compName = t.name
-    ui.dataBinding[compName] = { vars = { } }
+    ui.dataBinding[compName] = { vars = { }, methods = { } }
     for varName, bindingTable in pairs(t) do
         if type(bindingTable) == "table" and bindingTable.binding then
-            ui.dataBinding[compName].vars[varName] = true
-            t[varName] = ui.vues[compName].data[varName]
+            if bindingTable.type == "var" then
+                ui.dataBinding[compName].vars[bindingTable.name] = varName
+                t[varName] = ui.vues[compName].data[bindingTable.name]
+            elseif bindingTable.type == "method" then
+                ui.dataBinding[compName].methods[bindingTable.name] = varName
+                t[varName] = ui.vues[compName].methods[bindingTable.name]
+            end
         end
     end
     -- create the component
     local component = compCreateFunc(t)
     component.name = compName
     ui.dataBinding[compName].ref = component
-    -- add binding updater to component
-    component.updateBindings = function(self)
+
+    -- add binding updaters to component
+    component.updateVars = function(self)
         local vars = ui.dataBinding[self.name].vars
-        for varName, _ in pairs(vars) do
-            component[varName] = ui.vues[self.name].data[varName]
+        for bindingName, varName in pairs(vars) do
+            component[varName] = ui.vues[self.name].data[bindingName]
         end
     end
+    component.updateMethods = function(self)
+        local methods = ui.dataBinding[self.name].methods
+        for bindingName, varName in pairs(methods) do
+            component[varName] = ui.vues[self.name].methods[bindingName]
+        end
+    end
+
+    -- add the component to the components list
     ui.components[#ui.components + 1] = component
     return component
 end
 
 function ui.update()
     for _, comp in ipairs(ui.components) do
-        comp:updateBindings()
+        comp:updateVars()
     end
 end
 
@@ -81,6 +113,10 @@ end
 
 function ui.getData(name)
     return ui.vues[name].data
+end
+
+function ui.getMethods(name)
+    return ui.vues[name].methods
 end
 
 function ui.Label(t)
@@ -147,18 +183,19 @@ function ui.Button(t)
 end
 
 -- globally load ui functions
-ui.loadGlobal = function()
-    _G.bind = ui.bind
-    _G.Label = ui.Label
-    _G.Button = ui.Button
-    _G.Slider = ui.Slider
-    _G.CheckBox = ui.CheckBox
-    _G.TextField = ui.TextField
-    _G.ProgressBar = ui.ProgressBar
-    _G.Spinner = ui.Spinner
-    _G.Joystick = ui.Joystic
-    _G.Knob = ui.Knob
-    _G.Panel = ui.Panel
-    _G.Button = ui.Button
+function ui:loadGlobal()
+    _G.bindVar = self.bindVar
+    _G.bindMethod = self.bindMethod
+    _G.Label = self.Label
+    _G.Button = self.Button
+    _G.Slider = self.Slider
+    _G.CheckBox = self.CheckBox
+    _G.TextField = self.TextField
+    _G.ProgressBar = self.ProgressBar
+    _G.Spinner = self.Spinner
+    _G.Joystick = self.Joystic
+    _G.Knob = self.Knob
+    _G.Panel = self.Panel
+    _G.Button = self.Button
 end
 return ui

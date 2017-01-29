@@ -9,8 +9,13 @@ ui.ViewModel {
         text = "Exit",
         x = 300,
         y = 300,
-        w = 150,
-        h = 35,
+        width = 150,
+        height = 35,
+    },
+    methods = {
+        onRelease = function()
+            gooi.confirm("Are you sure?", function() love.event.quit() end)
+        end
     }
 }
 
@@ -25,21 +30,17 @@ ui.ViewModel {
 function love.load()
     local button = ui.Button {
         name = "button",
-        text = ui.bind "text",
-        x = ui.bind "x",
-        y = ui.bind "y",
-        w = ui.bind "w",
-        h = ui.bind "h",
+        text = ui.bindVar "text",
+        x = ui.bindVar "x",
+        y = ui.bindVar "y",
+        w = ui.bindVar "width",
+        h = ui.bindVar "height",
         align = "left", icon = "imgs/exit.png",
-        onRelease = function()
-            gooi.confirm("Are you sure?", function()
-                love.event.quit()
-            end)
-        end
+        onRelease = ui.bindMethod "onRelease"
     }
     local panel = ui.Panel {
         name = "panel",
-        x = 0, y = 0, w = ui.bind "w", h = ui.bind "h",
+        x = 0, y = 0, w = ui.bindVar "w", h = ui.bindVar "h",
         layout = "grid 4x4",
         rowspan = {1, 1, 2},
         colspan = {4, 3, 2},
@@ -70,32 +71,34 @@ function love.update(dt)
         -- Alternatively:
         -- ui.vues.button.data.x = ui.vues.button.data.x - 1
         if love.keyboard.isDown('lctrl') then
-            ui.getData("button").w = ui.getData("button").w - 1
+            ui.getData("button").width = ui.getData("button").width - 1
         else
             ui.getData("button").x = ui.getData("button").x - 1
         end
     end
     if love.keyboard.isDown('right') then
         if love.keyboard.isDown('lctrl') then
-            ui.getData("button").w = ui.getData("button").w + 1
+            ui.getData("button").width = ui.getData("button").width + 1
         else
             ui.getData("button").x = ui.getData("button").x + 1
         end
     end
     if love.keyboard.isDown('up') then
         if love.keyboard.isDown('lctrl') then
-            ui.getData("button").h = ui.getData("button").h - 1
+            ui.getData("button").height = ui.getData("button").height - 1
         else
             ui.getData("button").y = ui.getData("button").y - 1
         end
     end
     if love.keyboard.isDown('down') then
         if love.keyboard.isDown('lctrl') then
-            ui.getData("button").h = ui.getData("button").h + 1
+            ui.getData("button").height = ui.getData("button").height + 1
         else
             ui.getData("button").y = ui.getData("button").y + 1
         end
-
+    end
+    if love.keyboard.isDown('return') then
+        ui.getMethods("button").onRelease()
     end
 end
 
